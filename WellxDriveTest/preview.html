@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WellxDriveTest — UI Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #080E1E;
+    --surface: #0E1632;
+    --surface-light: #16203A;
+    --accent: #00E676;
+    --accent-dim: rgba(0,230,118,0.3);
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255,255,255,0.6);
+    --text-tertiary: rgba(255,255,255,0.35);
+    --sev-low: #4CAF50;
+    --sev-med: #FFC107;
+    --sev-high: #FF5722;
+    --sev-crit: #F44336;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050810;
+    font-family: var(--sans);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    padding: 32px 16px;
+    min-height: 100vh;
+    flex-wrap: wrap;
+  }
+
+  .phone-frame {
+    width: 390px;
+    min-height: 844px;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 3px solid #1a2340;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,230,118,0.06), 0 20px 60px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 126px; height: 34px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+  }
+
+  .screen {
+    height: 100%;
+    overflow-y: auto;
+    padding-top: 50px;
+    padding-bottom: 34px;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .screen-label {
+    position: absolute;
+    bottom: -36px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 20px 0;
+  }
+  .header-left h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+  .header-left span {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .header-right {
+    text-align: right;
+  }
+  .timer {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .recording {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+  .rec-dot {
+    width: 6px; height: 6px;
+    background: var(--sev-crit);
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .rec-text {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--sev-crit);
+    letter-spacing: 1px;
+  }
+
+  /* ===== SCORE RING ===== */
+  .score-ring-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .score-ring {
+    width: 160px; height: 160px;
+    position: relative;
+  }
+  .score-ring svg {
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .score-ring .bg-ring {
+    fill: none;
+    stroke: var(--surface-light);
+    stroke-width: 9;
+  }
+  .score-ring .fg-ring {
+    fill: none;
+    stroke-width: 9;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease, stroke 0.5s ease;
+    filter: drop-shadow(0 0 8px var(--accent));
+  }
+  .score-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .score-number {
+    font-family: var(--mono);
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+    opacity: 0.8;
+  }
+
+  /* ===== BUTTON ===== */
+  .trip-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 20px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--bg);
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+  }
+  .trip-btn:active { transform: scale(0.97); }
+  .trip-btn.start { background: var(--accent); }
+  .trip-btn.stop { background: var(--sev-crit); }
+  .trip-btn svg { width: 14px; height: 14px; fill: var(--bg); }
+
+  /* ===== CARD ===== */
+  .card {
+    margin: 12px 14px 0;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: 10px;
+  }
+  .card-title {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  /* ===== SENSORS ===== */
+  .sensor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .phone-state-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .phone-state-badge.resting {
+    background: var(--surface-light);
+    color: var(--text-tertiary);
+  }
+  .phone-state-badge.active {
+    background: rgba(255,193,7,0.15);
+    color: var(--sev-med);
+  }
+  .sensor-grid {
+    display: flex;
+    gap: 16px;
+  }
+  .sensor-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sensor-line {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .sensor-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(0,230,118,0.6);
+    width: 16px;
+  }
+  .sensor-value {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: right;
+    width: 60px;
+  }
+  .sensor-unit {
+    font-size: 8px;
+    color: var(--text-tertiary);
+  }
+
+  /* ===== CATEGORY SCORES ===== */
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 20px;
+  }
+  .cat-icon {
+    font-size: 11px;
+    width: 16px;
+    text-align: center;
+  }
+  .cat-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    width: 72px;
+  }
+  .cat-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-light);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .cat-score {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    width: 28px;
+    text-align: right;
+  }
+  .cat-count {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-tertiary);
+    width: 24px;
+  }
+
+  /* ===== TREND CHART ===== */
+  .trend-chart {
+    position: relative;
+    height: 56px;
+  }
+  .trend-chart svg {
+    width: 100%;
+    height: 100%;
+  }
+  .trend-grid {
+    stroke: var(--surface-light);
+    stroke-width: 0.5;
+  }
+  .trend-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .trend-fill {
+    fill: url(#trendGrad);
+  }
+
+  /* ===== EVENTS ===== */
+  .events-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 16px 6px;
+  }
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--surface-light);
+  }
+  .event-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+  }
+  .event-info {
+    flex: 1;
+  }
+  .event-type {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .event-detail {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+  .sev-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .sev-low { color: var(--sev-low); background: rgba(76,175,80,0.15); }
+  .sev-med { color: var(--sev-med); background: rgba(255,193,7,0.15); }
+  .sev-high { color: var(--sev-high); background: rgba(255,87,34,0.15); }
+  .sev-crit { color: var(--sev-crit); background: rgba(244,67,54,0.15); }
+  .event-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  /* ===== IDLE STATE ===== */
+  .idle-info {
+    text-align: center;
+    padding: 20px 28px 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .feature-list {
+    margin-top: 12px;
+    text-align: left;
+  }
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 3px 0;
+  }
+  .feature-check {
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  /* ===== SUMMARY ===== */
+  .summary-title {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    letter-spacing: 2px;
+    padding-top: 16px;
+    margin-bottom: 8px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-icon { font-size: 16px; color: var(--accent); margin-bottom: 4px; }
+  .stat-value { font-size: 16px; font-weight: 700; }
+  .stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .phone-stats-row {
+    display: flex;
+    gap: 8px;
+  }
+  .phone-stat {
+    flex: 1;
+    text-align: center;
+  }
+  .phone-stat-val {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .phone-stat-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+  .breakdown-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .breakdown-count {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 16px 20px 0;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(0,230,118,0.15);
+    color: var(--accent);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .new-trip-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 8px 20px 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 860px) {
+    body { flex-direction: column; align-items: center; }
+  }
+
+  /* Wrapper label */
+  .frame-wrap {
+    position: relative;
+    padding-bottom: 44px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: IDLE STATE ==================== -->
+<div class="frame-wrap">
+<div class="phone-frame">
+<div class="screen">
+  <div class="header">
+    <div class="header-left">
+      <h1>WellxDrive</h1>
+      <span>Driving Behavior Test</span>
+    </div>
+  </div>
+
+  <div class="score-ring-wrap" style="padding: 20px 0;">
+    <div class="score-ring" style="width:180px;height:180px;">
+      <svg viewBox="0 0 180 180">
+        <circle class="bg-ring" cx="90" cy="90" r="78"/>
+        <circle class="fg-ring" cx="90" cy="90" r="78"
+          stroke="var(--accent)"
+          stroke-dasharray="490"
+          stroke-dashoffset="0"
+          style="filter:drop-shadow(0 0 8px rgba(0,230,118,0.5))"/>
+      </svg>
+      <div class="score-center">
+        <div class="score-number" style="color:var(--accent)">100</div>
+        <div class="score-label" style="color:var(--accent)">LOW RISK</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="trip-btn start">
+    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    START TRIP
+  </button>
+
+  <div class="idle-info">
+    Mount your phone in your car and tap Start Trip
+    <div class="feature-list">
+      <div class="feature-item"><span class="feature-check">&#10003;</span> Harsh braking &amp; rapid acceleration</div>
+      <div class="feature-item"><span class="feature-check">&#10003;</span> Sharp turns &amp; swerving</div>
+      <div class="feature-item"><span class="feature-check">&#10003;</span> Impact detection</div>
+      <div class="feature-item"><span class="feature-check">&#10003;</span> Phone pickup, glance &amp; extended use</div>
+      <div class="feature-item"><span class="feature-check">&#10003;</span> Real-time risk scoring</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="screen-label">IDLE — Ready to Start</div>
+</div>
+
+<!-- ==================== SCREEN 2: ACTIVE TRIP ==================== -->
+<div class="frame-wrap">
+<div class="phone-frame">
+<div class="screen" id="activeScreen">
+  <div class="header">
+    <div class="header-left">
+      <h1>WellxDrive</h1>
+      <span>Driving Behavior Test</span>
+    </div>
+    <div class="header-right">
+      <div class="timer" id="tripTimer">03:47</div>
+      <div class="recording">
+        <div class="rec-dot"></div>
+        <span class="rec-text">RECORDING</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="score-ring-wrap">
+    <div class="score-ring" id="scoreRing">
+      <svg viewBox="0 0 160 160">
+        <circle class="bg-ring" cx="80" cy="80" r="68"/>
+        <circle class="fg-ring" id="scoreArc" cx="80" cy="80" r="68"
+          stroke="var(--accent)"
+          stroke-dasharray="427"
+          stroke-dashoffset="68"/>
+      </svg>
+      <div class="score-center">
+        <div class="score-number" id="scoreNum" style="color:var(--accent);font-size:38px;">84</div>
+        <div class="score-label" id="scoreLbl" style="color:var(--accent)">LOW RISK</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="trip-btn stop">
+    <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+    END TRIP
+  </button>
+
+  <!-- Sensor Readings -->
+  <div class="card">
+    <div class="sensor-header">
+      <span class="card-title" style="margin:0">SENSORS</span>
+      <span class="phone-state-badge resting" id="phoneStateBadge">RESTING</span>
+    </div>
+    <div class="sensor-grid">
+      <div class="sensor-col">
+        <div class="sensor-line"><span class="sensor-label">aX</span><span class="sensor-value" id="sAx">  -0.42</span><span class="sensor-unit">m/s²</span></div>
+        <div class="sensor-line"><span class="sensor-label">aY</span><span class="sensor-value" id="sAy">  +1.87</span><span class="sensor-unit">m/s²</span></div>
+        <div class="sensor-line"><span class="sensor-label">aZ</span><span class="sensor-value" id="sAz">  -9.71</span><span class="sensor-unit">m/s²</span></div>
+      </div>
+      <div class="sensor-col">
+        <div class="sensor-line"><span class="sensor-label">gX</span><span class="sensor-value" id="sGx">  +0.03</span><span class="sensor-unit">r/s</span></div>
+        <div class="sensor-line"><span class="sensor-label">gY</span><span class="sensor-value" id="sGy">  -0.01</span><span class="sensor-unit">r/s</span></div>
+        <div class="sensor-line"><span class="sensor-label">gZ</span><span class="sensor-value" id="sGz">  +0.12</span><span class="sensor-unit">r/s</span></div>
+      </div>
+      <div class="sensor-col">
+        <div class="sensor-line"><span class="sensor-label">P</span><span class="sensor-value" id="sPitch"> +10.87</span><span class="sensor-unit">°</span></div>
+        <div class="sensor-line"><span class="sensor-label">R</span><span class="sensor-value" id="sRoll">  +2.48</span><span class="sensor-unit">°</span></div>
+        <div class="sensor-line"><span class="sensor-label">M</span><span class="sensor-value" id="sMag">  +9.89</span><span class="sensor-unit">m/s²</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Scores -->
+  <div class="card">
+    <div class="card-title">CATEGORY SCORES</div>
+    <div id="categoryScores">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- Score Trend -->
+  <div class="card">
+    <div class="card-title">SCORE TREND (60s)</div>
+    <div class="trend-chart">
+      <svg viewBox="0 0 320 56" preserveAspectRatio="none" id="trendSvg">
+        <defs>
+          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(0,230,118,0.3)"/>
+            <stop offset="100%" stop-color="rgba(0,230,118,0)"/>
+          </linearGradient>
+        </defs>
+        <line class="trend-grid" x1="0" y1="14" x2="320" y2="14"/>
+        <line class="trend-grid" x1="0" y1="28" x2="320" y2="28"/>
+        <line class="trend-grid" x1="0" y1="42" x2="320" y2="42"/>
+        <path class="trend-fill" id="trendFill"/>
+        <path class="trend-line" id="trendLine"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Events -->
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="events-header">
+      <span class="card-title" style="margin:0">LIVE EVENTS</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text-tertiary)" id="eventCount">7 total</span>
+    </div>
+    <div id="eventsList">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <div style="height:20px"></div>
+</div>
+</div>
+<div class="screen-label">ACTIVE TRIP — Live Detection</div>
+</div>
+
+<!-- ==================== SCREEN 3: TRIP SUMMARY ==================== -->
+<div class="frame-wrap">
+<div class="phone-frame">
+<div class="screen">
+  <div class="summary-title">TRIP SUMMARY</div>
+
+  <div class="score-ring-wrap">
+    <div class="score-ring">
+      <svg viewBox="0 0 160 160">
+        <circle class="bg-ring" cx="80" cy="80" r="68"/>
+        <circle class="fg-ring" cx="80" cy="80" r="68"
+          stroke="var(--sev-med)"
+          stroke-dasharray="427"
+          stroke-dashoffset="140"
+          style="filter:drop-shadow(0 0 8px rgba(255,193,7,0.5))"/>
+      </svg>
+      <div class="score-center">
+        <div class="score-number" style="color:var(--sev-med);font-size:38px;">67</div>
+        <div class="score-label" style="color:var(--sev-med)">MODERATE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">&#128339;</div>
+      <div class="stat-value">12 min 34 sec</div>
+      <div class="stat-label">DURATION</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">&#9888;</div>
+      <div class="stat-value">14</div>
+      <div class="stat-label">EVENTS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--sev-med)">MODERATE</div>
+      <div class="stat-label">RISK LEVEL</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--sev-med)">67</div>
+      <div class="stat-label">SCORE</div>
+    </div>
+  </div>
+
+  <!-- Phone stats -->
+  <div class="card">
+    <div class="card-title">PHONE USAGE</div>
+    <div class="phone-stats-row">
+      <div class="phone-stat"><div class="phone-stat-val">3</div><div class="phone-stat-label">Pickups</div></div>
+      <div class="phone-stat"><div class="phone-stat-val">1</div><div class="phone-stat-label">Glances</div></div>
+      <div class="phone-stat"><div class="phone-stat-val">2</div><div class="phone-stat-label">Extended</div></div>
+      <div class="phone-stat"><div class="phone-stat-val">28s</div><div class="phone-stat-label">Time</div></div>
+    </div>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="card">
+    <div class="card-title">EVENT BREAKDOWN</div>
+    <div class="breakdown-row"><span class="breakdown-name">Harsh Braking</span><span class="breakdown-count">4</span></div>
+    <div class="breakdown-row"><span class="breakdown-name">Extended Phone Use</span><span class="breakdown-count">3</span></div>
+    <div class="breakdown-row"><span class="breakdown-name">Sharp Turn</span><span class="breakdown-count">3</span></div>
+    <div class="breakdown-row"><span class="breakdown-name">Rapid Acceleration</span><span class="breakdown-count">2</span></div>
+    <div class="breakdown-row"><span class="breakdown-name">Swerving</span><span class="breakdown-count">1</span></div>
+    <div class="breakdown-row"><span class="breakdown-name">Phone Glance</span><span class="breakdown-count">1</span></div>
+  </div>
+
+  <!-- Sample events in summary -->
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="events-header">
+      <span class="card-title" style="margin:0">ALL EVENTS</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text-tertiary)">14</span>
+    </div>
+    <div class="event-row">
+      <span class="event-icon" style="color:var(--sev-high)">&#9660;</span>
+      <div class="event-info"><div class="event-type">Harsh Braking</div><div class="event-detail">7.2 m/s²</div></div>
+      <span class="sev-badge sev-high">HIGH</span>
+      <span class="event-time">14:32:18</span>
+    </div>
+    <div class="event-row">
+      <span class="event-icon" style="color:var(--sev-med)">&#128241;</span>
+      <div class="event-info"><div class="event-type">Extended Phone Use</div><div class="event-detail">12s phone use</div></div>
+      <span class="sev-badge sev-med">MED</span>
+      <span class="event-time">14:31:44</span>
+    </div>
+    <div class="event-row">
+      <span class="event-icon" style="color:var(--sev-low)">&#8635;</span>
+      <div class="event-info"><div class="event-type">Sharp Turn</div><div class="event-detail">Left 1.34 rad/s</div></div>
+      <span class="sev-badge sev-low">LOW</span>
+      <span class="event-time">14:30:56</span>
+    </div>
+    <div class="event-row">
+      <span class="event-icon" style="color:var(--sev-med)">&#9650;</span>
+      <div class="event-info"><div class="event-type">Rapid Acceleration</div><div class="event-detail">4.1 m/s²</div></div>
+      <span class="sev-badge sev-med">MED</span>
+      <span class="event-time">14:30:12</span>
+    </div>
+  </div>
+
+  <button class="share-btn">&#8683; SHARE AS JSON</button>
+  <button class="new-trip-btn">&#8634; NEW TRIP</button>
+
+  <div style="height:20px"></div>
+</div>
+</div>
+<div class="screen-label">TRIP SUMMARY — Post-Trip</div>
+</div>
+
+<script>
+// ===== Populate Category Scores =====
+const categories = [
+  { icon: '&#9660;', name: 'Braking', score: 92, count: 2, color: 'var(--accent)' },
+  { icon: '&#9650;', name: 'Acceleration', score: 88, count: 1, color: 'var(--accent)' },
+  { icon: '&#8635;', name: 'Turns', score: 78, count: 3, color: 'var(--sev-med)' },
+  { icon: '&#8646;', name: 'Swerving', score: 95, count: 0, color: 'var(--accent)' },
+  { icon: '&#128241;', name: 'Phone Use', score: 64, count: 4, color: 'var(--sev-med)' },
+];
+
+function getScoreColor(s) {
+  if (s >= 80) return 'var(--accent)';
+  if (s >= 60) return 'var(--sev-med)';
+  if (s >= 40) return 'var(--sev-high)';
+  return 'var(--sev-crit)';
+}
+
+const catContainer = document.getElementById('categoryScores');
+categories.forEach(c => {
+  const col = getScoreColor(c.score);
+  catContainer.innerHTML += `
+    <div class="cat-row">
+      <span class="cat-icon" style="color:${col}">${c.icon}</span>
+      <span class="cat-name">${c.name}</span>
+      <div class="cat-bar"><div class="cat-bar-fill" style="width:${c.score}%;background:${col}"></div></div>
+      <span class="cat-score" style="color:${col}">${c.score}</span>
+      <span class="cat-count">${c.count > 0 ? '(' + c.count + ')' : ''}</span>
+    </div>`;
+});
+
+// ===== Populate Trend Chart =====
+const trendData = [100,100,99,98,97,96,96,95,93,91,90,89,88,88,87,86,86,85,85,85,84,84,84,83,83,84,84,84,85,85,84,84,84,84,84,84,84,84,84,84];
+const svgW = 320, svgH = 56;
+const minS = Math.min(...trendData) - 2;
+const maxS = Math.max(...trendData) + 2;
+const range = maxS - minS;
+let linePath = '', fillPath = '';
+trendData.forEach((v, i) => {
+  const x = (i / (trendData.length - 1)) * svgW;
+  const y = svgH - ((v - minS) / range) * svgH;
+  linePath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  fillPath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+});
+fillPath += `L${svgW},${svgH}L0,${svgH}Z`;
+document.getElementById('trendLine').setAttribute('d', linePath);
+document.getElementById('trendFill').setAttribute('d', fillPath);
+
+// ===== Populate Events =====
+const events = [
+  { icon: '&#128065;', type: 'Phone Glance', detail: 'Glance: 1.8s', sev: 'med', sevLabel: 'MED', time: '14:35:22', color: 'var(--sev-med)' },
+  { icon: '&#9660;', type: 'Harsh Braking', detail: '5.2 m/s²', sev: 'low', sevLabel: 'LOW', time: '14:34:51', color: 'var(--sev-low)' },
+  { icon: '&#8635;', type: 'Sharp Turn', detail: 'Right 1.45 rad/s', sev: 'med', sevLabel: 'MED', time: '14:34:12', color: 'var(--sev-med)' },
+  { icon: '&#128241;', type: 'Extended Phone Use', detail: '8s phone use', sev: 'med', sevLabel: 'MED', time: '14:33:40', color: 'var(--sev-med)' },
+  { icon: '&#128241;', type: 'Phone Pickup', detail: 'Phone picked up', sev: 'low', sevLabel: 'LOW', time: '14:33:32', color: 'var(--sev-low)' },
+  { icon: '&#9650;', type: 'Rapid Acceleration', detail: '3.8 m/s²', sev: 'low', sevLabel: 'LOW', time: '14:32:55', color: 'var(--sev-low)' },
+  { icon: '&#9660;', type: 'Harsh Braking', detail: '6.8 m/s²', sev: 'high', sevLabel: 'HIGH', time: '14:32:03', color: 'var(--sev-high)' },
+];
+
+const evtContainer = document.getElementById('eventsList');
+document.getElementById('eventCount').textContent = events.length + ' total';
+events.forEach(e => {
+  evtContainer.innerHTML += `
+    <div class="event-row">
+      <span class="event-icon" style="color:${e.color}">${e.icon}</span>
+      <div class="event-info"><div class="event-type">${e.type}</div><div class="event-detail">${e.detail}</div></div>
+      <span class="sev-badge sev-${e.sev}">${e.sevLabel}</span>
+      <span class="event-time">${e.time}</span>
+    </div>`;
+});
+
+// ===== Simulate live sensor updates =====
+function rng(base, variance) { return base + (Math.random() - 0.5) * variance * 2; }
+function fmt(v) { return (v >= 0 ? '  +' : '  ') + v.toFixed(2); }
+
+setInterval(() => {
+  document.getElementById('sAx').textContent = fmt(rng(-0.4, 0.3));
+  document.getElementById('sAy').textContent = fmt(rng(1.8, 0.5));
+  document.getElementById('sAz').textContent = fmt(rng(-9.7, 0.15));
+  document.getElementById('sGx').textContent = fmt(rng(0.03, 0.05));
+  document.getElementById('sGy').textContent = fmt(rng(-0.01, 0.04));
+  document.getElementById('sGz').textContent = fmt(rng(0.12, 0.08));
+  const p = rng(10.8, 1.5);
+  const r = rng(2.5, 1.0);
+  document.getElementById('sPitch').textContent = fmt(p);
+  document.getElementById('sRoll').textContent = fmt(r);
+  const ax = rng(-0.4, 0.3), ay = rng(1.8, 0.5), az = rng(-9.7, 0.15);
+  document.getElementById('sMag').textContent = fmt(Math.sqrt(ax*ax + ay*ay + az*az));
+}, 100);
+
+// Simulate timer
+let sec = 227;
+setInterval(() => {
+  sec++;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  document.getElementById('tripTimer').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}, 1000);
+</script>
+</body>
+</html>
