@@ -48,9 +48,9 @@ final class RiskScoringEngine {
 
         if accelJerkBuffer.isFull {
             let avgJerk = accelJerkBuffer.mean
-            // Penalize high average jerk
-            if avgJerk > 2.0 {
-                smoothnessPenalty += 0.01
+            // Penalize high average jerk (threshold raised for gravity-free data)
+            if avgJerk > 5.0 {
+                smoothnessPenalty += 0.005
             }
         }
     }

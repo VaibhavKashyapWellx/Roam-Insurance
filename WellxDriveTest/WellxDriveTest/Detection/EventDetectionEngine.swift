@@ -1,12 +1,12 @@
 import Foundation
 
 final class EventDetectionEngine {
-    // Thresholds
-    private let harshBrakingThreshold: Double = 4.5   // m/s²
-    private let rapidAccelThreshold: Double = 3.5     // m/s²
-    private let sharpTurnThreshold: Double = 1.2      // rad/s
-    private let impactThreshold: Double = 15.0        // m/s²
-    private let cooldownInterval: TimeInterval = 2.0  // seconds
+    // Thresholds (tuned for gravity-free userAcceleration from CMDeviceMotion)
+    private let harshBrakingThreshold: Double = 7.0   // m/s² (~0.7g, genuine hard braking)
+    private let rapidAccelThreshold: Double = 5.5     // m/s² (~0.56g, aggressive acceleration)
+    private let sharpTurnThreshold: Double = 2.0      // rad/s (genuine sharp turn)
+    private let impactThreshold: Double = 20.0        // m/s² (~2g, real collision force)
+    private let cooldownInterval: TimeInterval = 3.0  // seconds
 
     // Rolling buffers for smoothing (50 samples = 1 second at 50Hz)
     private var accelYBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
@@ -72,11 +72,11 @@ final class EventDetectionEngine {
             }
         }
 
-        // 4. Sharp turns (gyroscope Z-axis yaw rate)
-        let absGyroZ = abs(reading.gyroZ)
+        // 4. Sharp turns (gyroscope Z-axis yaw rate, use smoothed value to filter noise)
+        let absGyroZ = abs(smoothedGyroZ)
         if absGyroZ > sharpTurnThreshold {
             let severity = classifyTurnSeverity(absGyroZ)
-            let direction = reading.gyroZ > 0 ? "Left" : "Right"
+            let direction = smoothedGyroZ > 0 ? "Left" : "Right"
             if let event = createEventIfCooldown(.sharpTurn, severity: severity, value: absGyroZ,
                                                   detail: String(format: "%@ %.2f rad/s", direction, absGyroZ), at: now) {
                 events.append(event)
@@ -86,8 +86,8 @@ final class EventDetectionEngine {
         // 5. Swerving (rapid gyro Z variance oscillation)
         if gyroZVarianceBuffer.count >= 20 {
             let varianceOfVariance = computeVarianceOfVariance()
-            if varianceOfVariance > 0.3 {
-                let severity: Severity = varianceOfVariance > 1.0 ? .high : (varianceOfVariance > 0.6 ? .medium : .low)
+            if varianceOfVariance > 0.8 {
+                let severity: Severity = varianceOfVariance > 2.0 ? .high : (varianceOfVariance > 1.2 ? .medium : .low)
                 if let event = createEventIfCooldown(.swerving, severity: severity, value: varianceOfVariance,
                                                       detail: String(format: "Var: %.2f", varianceOfVariance), at: now) {
                     events.append(event)
@@ -122,23 +122,23 @@ final class EventDetectionEngine {
     }
 
     private func classifyBrakingSeverity(_ force: Double) -> Severity {
-        if force > 9.0 { return .critical }
-        if force > 7.0 { return .high }
-        if force > 5.5 { return .medium }
+        if force > 14.0 { return .critical }
+        if force > 11.0 { return .high }
+        if force > 9.0 { return .medium }
         return .low
     }
 
     private func classifyAccelSeverity(_ force: Double) -> Severity {
-        if force > 7.0 { return .critical }
-        if force > 5.5 { return .high }
-        if force > 4.5 { return .medium }
+        if force > 12.0 { return .critical }
+        if force > 9.0 { return .high }
+        if force > 7.0 { return .medium }
         return .low
     }
 
     private func classifyTurnSeverity(_ rate: Double) -> Severity {
-        if rate > 3.0 { return .critical }
-        if rate > 2.0 { return .high }
-        if rate > 1.5 { return .medium }
+        if rate > 5.0 { return .critical }
+        if rate > 3.5 { return .high }
+        if rate > 2.5 { return .medium }
         return .low
     }
 
