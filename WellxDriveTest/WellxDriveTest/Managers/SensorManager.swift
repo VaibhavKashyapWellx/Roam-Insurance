@@ -44,12 +44,22 @@ final class SensorManager: ObservableObject {
     }
 
     private func processDeviceMotion(_ motion: CMDeviceMotion) {
-        let g = 9.81
+        let gConst = 9.81
+        let ua = motion.userAcceleration  // gravity-free, in G units
+        let grav = motion.gravity          // unit vector pointing down
 
-        // userAcceleration is gravity-free (in G units), convert to m/s²
-        let ax = motion.userAcceleration.x * g
-        let ay = motion.userAcceleration.y * g
-        let az = motion.userAcceleration.z * g
+        // Project userAcceleration onto gravity to get vertical component
+        let verticalG = ua.x * grav.x + ua.y * grav.y + ua.z * grav.z
+
+        // Subtract vertical component to get horizontal-only acceleration (in device frame)
+        let horizX = ua.x - verticalG * grav.x
+        let horizY = ua.y - verticalG * grav.y
+        let horizZ = ua.z - verticalG * grav.z
+
+        // Convert horizontal components to m/s²
+        let ax = horizX * gConst
+        let ay = horizY * gConst
+        let az = horizZ * gConst
 
         let gx = motion.rotationRate.x
         let gy = motion.rotationRate.y
