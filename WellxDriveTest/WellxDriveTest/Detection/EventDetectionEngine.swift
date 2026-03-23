@@ -44,7 +44,7 @@ final class EventDetectionEngine {
         smoothedGyroZ = gyroZBuffer.mean
 
         let now = reading.timestamp
-        let isMoving = reading.speed >= minSpeedForEvents || reading.speed < 0  // treat unavailable GPS as moving (fallback)
+        let isMoving = reading.speed >= minSpeedForEvents  // suppress events when stationary OR when GPS is unavailable (speed < 0)
 
         // 1. Impact detection (highest priority, raw magnitude — always active regardless of speed)
         if reading.accelMagnitude > impactThreshold {
