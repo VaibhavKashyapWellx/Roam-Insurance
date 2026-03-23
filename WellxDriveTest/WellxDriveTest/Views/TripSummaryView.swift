@@ -71,6 +71,62 @@ struct TripSummaryView: View {
                 .cornerRadius(10)
                 .padding(.horizontal, 12)
 
+                // Risk factors
+                if !tripData.riskFactors.isEmpty {
+                    VStack(spacing: 6) {
+                        Text("RISK ANALYSIS")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(Theme.textTertiary)
+                            .tracking(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        ForEach(tripData.riskFactors, id: \.self) { factor in
+                            HStack(spacing: 8) {
+                                Image(systemName: factor.contains("No significant") ? "checkmark.shield" : "exclamationmark.triangle")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(factor.contains("No significant") ? Theme.accent : Theme.severityHigh)
+                                Text(factor)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.textSecondary)
+                                Spacer()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Theme.surface)
+                    .cornerRadius(10)
+                    .padding(.horizontal, 12)
+                }
+
+                // Category scores
+                if !tripData.categoryScores.isEmpty {
+                    VStack(spacing: 6) {
+                        Text("CATEGORY SCORES")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(Theme.textTertiary)
+                            .tracking(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        ForEach(tripData.categoryScores.sorted(by: { $0.value < $1.value }), id: \.key) { key, value in
+                            HStack {
+                                Text(key)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.textSecondary)
+                                Spacer()
+                                Text("\(Int(value))")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .foregroundColor(Theme.scoreColor(for: value))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Theme.surface)
+                    .cornerRadius(10)
+                    .padding(.horizontal, 12)
+                }
+
                 // Event breakdown
                 if !tripData.categoryBreakdown.isEmpty {
                     VStack(spacing: 6) {

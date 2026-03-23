@@ -27,10 +27,10 @@ enum EventType: String, Codable, CaseIterable {
         switch self {
         case .harshBraking: return .braking
         case .rapidAcceleration: return .acceleration
-        case .sharpTurn: return .turns
-        case .swerving: return .swerving
+        case .sharpTurn: return .cornering
+        case .swerving: return .cornering
         case .impact: return .braking
-        case .phonePickup, .phoneGlance, .extendedPhoneUse: return .phoneUse
+        case .phonePickup, .phoneGlance, .extendedPhoneUse: return .distraction
         }
     }
 }
@@ -38,9 +38,10 @@ enum EventType: String, Codable, CaseIterable {
 enum EventCategory: String, Codable, CaseIterable {
     case braking = "Braking"
     case acceleration = "Acceleration"
-    case turns = "Turns"
-    case swerving = "Swerving"
-    case phoneUse = "Phone Use"
+    case cornering = "Cornering"
+    case distraction = "Distraction"
+    case smoothness = "Smoothness"
+    case context = "Context"
 }
 
 enum Severity: Int, Codable, Comparable {
@@ -132,6 +133,8 @@ struct TripData: Codable {
     let totalExtendedUses: Int
     let totalPhoneTime: TimeInterval
     let categoryBreakdown: [String: Int]
+    let categoryScores: [String: Double]
+    let riskFactors: [String]            // human-readable risk factor descriptions
 }
 
 enum PhoneState: String {

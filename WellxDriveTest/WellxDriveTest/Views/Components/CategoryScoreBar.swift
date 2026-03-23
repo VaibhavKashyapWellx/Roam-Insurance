@@ -11,9 +11,10 @@ struct CategoryScoreBar: View {
         switch category {
         case .braking: return "arrow.down.circle"
         case .acceleration: return "arrow.up.circle"
-        case .turns: return "arrow.turn.right.up"
-        case .swerving: return "arrow.left.arrow.right"
-        case .phoneUse: return "iphone"
+        case .cornering: return "arrow.turn.right.up"
+        case .distraction: return "iphone"
+        case .smoothness: return "waveform.path"
+        case .context: return "clock"
         }
     }
 

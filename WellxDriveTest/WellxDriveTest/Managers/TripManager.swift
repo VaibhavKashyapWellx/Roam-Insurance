@@ -85,6 +85,23 @@ final class TripManager: ObservableObject {
             if count > 0 { breakdown[type.rawValue] = count }
         }
 
+        // Capture category scores
+        var catScores: [String: Double] = [:]
+        for cat in EventCategory.allCases {
+            catScores[cat.rawValue] = scoringEngine.categoryScore(for: cat)
+        }
+
+        // Generate human-readable risk factors
+        var riskFactors: [String] = []
+        for cat in EventCategory.allCases {
+            let score = scoringEngine.categoryScore(for: cat)
+            if score < 70 {
+                let severity = score < 40 ? "Critical" : (score < 55 ? "High" : "Elevated")
+                riskFactors.append("\(severity) \(cat.rawValue.lowercased()) risk (score: \(Int(score)))")
+            }
+        }
+        if riskFactors.isEmpty { riskFactors.append("No significant risk factors detected") }
+
         tripData = TripData(
             startTime: tripStartTime ?? endTime,
             endTime: endTime,
@@ -96,7 +113,9 @@ final class TripManager: ObservableObject {
             totalPhoneGlances: phoneDetector.glanceCount,
             totalExtendedUses: phoneDetector.extendedUseCount,
             totalPhoneTime: phoneDetector.totalPhoneTime,
-            categoryBreakdown: breakdown
+            categoryBreakdown: breakdown,
+            categoryScores: catScores,
+            riskFactors: riskFactors
         )
 
         showSummary = true
@@ -133,8 +152,11 @@ final class TripManager: ObservableObject {
         }
         phoneState = phoneDetector.state
 
-        // Smoothness tracking
-        scoringEngine.updateSmoothness(accelY: reading.accelY)
+        // Smoothness tracking (continuous jerk metric)
+        scoringEngine.updateSmoothness(accelY: reading.accelY, timestamp: reading.timestamp)
+
+        // Context tracking (time-of-day risk)
+        scoringEngine.updateContext(at: reading.timestamp)
 
         // Cap events list
         if events.count > 500 {
