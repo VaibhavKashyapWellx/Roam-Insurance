@@ -7,7 +7,8 @@ final class EventDetectionEngine {
     private let sharpTurnThreshold: Double = 2.0      // rad/s (genuine sharp turn)
     private let impactThreshold: Double = 20.0        // m/s² (~2g, real collision force)
     private let cooldownInterval: TimeInterval = 3.0  // seconds
-    private let minSpeedForEvents: Double = 1.4       // m/s (~5 km/h) - ignore events when nearly stationary
+    private let warmupDuration: TimeInterval = 3.0    // ignore events for first 3 seconds
+    private let minEstimatedSpeed: Double = 2.0       // m/s (~7 km/h) estimated from accel integration
 
     // Rolling buffers for smoothing (50 samples = 1 second at 50Hz)
     private var accelYBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
@@ -25,8 +26,17 @@ final class EventDetectionEngine {
     private(set) var smoothedAccelY: Double = 0
     private(set) var smoothedGyroZ: Double = 0
 
+    // Movement estimation (no GPS needed)
+    private var tripStartTime: Date?
+    private var estimatedSpeed: Double = 0        // rough m/s from integrating accelY
+    private var lastReadingTime: Date?
+    private let speedDecay: Double = 0.98         // decay factor to prevent drift accumulation
+
     func processSensorReading(_ reading: SensorReading) -> [DrivingEvent] {
         var events: [DrivingEvent] = []
+
+        // Track trip start for warmup
+        if tripStartTime == nil { tripStartTime = reading.timestamp }
 
         // Update buffers
         accelYBuffer.append(reading.accelY)
@@ -43,8 +53,29 @@ final class EventDetectionEngine {
         smoothedAccelY = accelYBuffer.mean
         smoothedGyroZ = gyroZBuffer.mean
 
+        // Estimate speed from accelerometer integration (rough but filters stationary false positives)
+        if let lastTime = lastReadingTime {
+            let dt = reading.timestamp.timeIntervalSince(lastTime)
+            if dt > 0 && dt < 0.1 {  // sanity check on dt
+                // Only integrate meaningful acceleration (above noise floor of ~0.3 m/s²)
+                let accelForIntegration = abs(smoothedAccelY) > 0.3 ? smoothedAccelY : 0
+                estimatedSpeed += accelForIntegration * dt
+                estimatedSpeed *= speedDecay  // decay to prevent unbounded drift
+                if estimatedSpeed < 0 { estimatedSpeed = 0 }  // speed can't be negative
+            }
+        }
+        lastReadingTime = reading.timestamp
+
         let now = reading.timestamp
-        let isMoving = reading.speed >= minSpeedForEvents  // suppress events when stationary OR when GPS is unavailable (speed < 0)
+        let inWarmup = now.timeIntervalSince(tripStartTime ?? now) < warmupDuration
+
+        // Use GPS speed if available, otherwise fall back to estimated speed
+        let isMoving: Bool
+        if reading.speed >= 0 {
+            isMoving = reading.speed >= 1.4  // GPS available: use 5 km/h threshold
+        } else {
+            isMoving = estimatedSpeed >= minEstimatedSpeed  // No GPS: use accel-based estimate
+        }
 
         // 1. Impact detection (highest priority, raw magnitude — always active regardless of speed)
         if reading.accelMagnitude > impactThreshold {
@@ -54,8 +85,8 @@ final class EventDetectionEngine {
             }
         }
 
-        // Skip driving behavior events when stationary — sensor noise at rest causes false positives
-        guard isMoving else { return events }
+        // Skip driving behavior events during warmup or when stationary
+        guard !inWarmup && isMoving else { return events }
 
         // 2. Harsh braking (negative Y-axis deceleration)
         // When braking, the phone's Y-axis shows negative acceleration (deceleration)
@@ -112,6 +143,9 @@ final class EventDetectionEngine {
         lastEventTime.removeAll()
         smoothedAccelY = 0
         smoothedGyroZ = 0
+        tripStartTime = nil
+        estimatedSpeed = 0
+        lastReadingTime = nil
     }
 
     // MARK: - Private
