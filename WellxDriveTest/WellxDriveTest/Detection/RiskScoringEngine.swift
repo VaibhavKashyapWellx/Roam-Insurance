@@ -73,7 +73,9 @@ final class RiskScoringEngine {
         guard let start = tripStartTime else { return 100 }
         let minutes = max(Date().timeIntervalSince(start) / 60.0, 0.5)
         let normalizedPenalty = penalty / minutes
-        return 100.0 / (1.0 + exp(0.3 * normalizedPenalty - 1.0))
+        // Logistic curve shifted so score starts at ~95 with 0 penalty
+        // and decays as penalties accumulate per minute
+        return 100.0 / (1.0 + exp(0.2 * normalizedPenalty - 3.0))
     }
 
     func categoryCount(for category: EventCategory) -> Int {
@@ -105,8 +107,9 @@ final class RiskScoringEngine {
         // Normalize penalties by trip duration
         let normalizedPenalty = (totalPenalty + smoothnessPenalty) / minutes
 
-        // Logistic curve: score = 100 / (1 + exp(0.15 * totalPenalty - 2))
-        let score = 100.0 / (1.0 + exp(0.15 * normalizedPenalty - 2.0))
+        // Logistic curve shifted so score starts at ~98 with 0 penalty
+        // and requires significant accumulated penalties to drop
+        let score = 100.0 / (1.0 + exp(0.1 * normalizedPenalty - 4.0))
         return max(0, min(100, score))
     }
 }
