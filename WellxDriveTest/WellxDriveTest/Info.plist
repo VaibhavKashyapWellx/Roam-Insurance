@@ -8,5 +8,7 @@
 	</array>
 	<key>NSMotionUsageDescription</key>
 	<string>WellxDriveTest uses motion sensors to detect driving behavior patterns like braking, acceleration, and turns.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WellxDriveTest uses your location to determine vehicle speed and avoid false driving event detections when stationary.</string>
 </dict>
 </plist>

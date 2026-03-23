@@ -99,6 +99,7 @@ struct SensorReading {
     var gyroZ: Double = 0
     var pitch: Double = 0
     var roll: Double = 0
+    var speed: Double = -1  // GPS speed in m/s, -1 = unavailable
     var timestamp: Date = Date()
 
     var accelMagnitude: Double {

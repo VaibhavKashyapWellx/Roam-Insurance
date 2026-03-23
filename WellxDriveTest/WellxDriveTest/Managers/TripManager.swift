@@ -15,6 +15,7 @@ final class TripManager: ObservableObject {
     @Published var tripData: TripData?
 
     let sensorManager = SensorManager()
+    private let locationManager = LocationManager()
     private let detectionEngine = EventDetectionEngine()
     private let phoneDetector = PhoneUseDetector()
     private let scoringEngine = RiskScoringEngine()
@@ -39,6 +40,7 @@ final class TripManager: ObservableObject {
         isTripping = true
 
         updateCategoryScores()
+        locationManager.start()
 
         sensorManager.start { [weak self] reading in
             Task { @MainActor [weak self] in
@@ -66,6 +68,7 @@ final class TripManager: ObservableObject {
 
     func endTrip() {
         sensorManager.stop()
+        locationManager.stop()
         durationTimer?.invalidate()
         scoreTimer?.invalidate()
         durationTimer = nil
@@ -111,6 +114,8 @@ final class TripManager: ObservableObject {
     // MARK: - Private
 
     private func processSensorReading(_ reading: SensorReading) {
+        var reading = reading
+        reading.speed = locationManager.currentSpeed
         currentReading = reading
 
         // Driving event detection

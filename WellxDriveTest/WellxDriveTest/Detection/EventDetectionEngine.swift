@@ -7,6 +7,7 @@ final class EventDetectionEngine {
     private let sharpTurnThreshold: Double = 2.0      // rad/s (genuine sharp turn)
     private let impactThreshold: Double = 20.0        // m/s² (~2g, real collision force)
     private let cooldownInterval: TimeInterval = 3.0  // seconds
+    private let minSpeedForEvents: Double = 1.4       // m/s (~5 km/h) - ignore events when nearly stationary
 
     // Rolling buffers for smoothing (50 samples = 1 second at 50Hz)
     private var accelYBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
@@ -43,14 +44,18 @@ final class EventDetectionEngine {
         smoothedGyroZ = gyroZBuffer.mean
 
         let now = reading.timestamp
+        let isMoving = reading.speed >= minSpeedForEvents || reading.speed < 0  // treat unavailable GPS as moving (fallback)
 
-        // 1. Impact detection (highest priority, raw magnitude)
+        // 1. Impact detection (highest priority, raw magnitude — always active regardless of speed)
         if reading.accelMagnitude > impactThreshold {
             if let event = createEventIfCooldown(.impact, severity: .critical, value: reading.accelMagnitude,
                                                   detail: String(format: "%.1f m/s²", reading.accelMagnitude), at: now) {
                 events.append(event)
             }
         }
+
+        // Skip driving behavior events when stationary — sensor noise at rest causes false positives
+        guard isMoving else { return events }
 
         // 2. Harsh braking (negative Y-axis deceleration)
         // When braking, the phone's Y-axis shows negative acceleration (deceleration)
