@@ -2,13 +2,13 @@ import Foundation
 
 final class EventDetectionEngine {
     // Thresholds (tuned for gravity-free userAcceleration from CMDeviceMotion)
-    private let harshBrakingThreshold: Double = 7.0   // m/s² (~0.7g, genuine hard braking)
-    private let rapidAccelThreshold: Double = 5.5     // m/s² (~0.56g, aggressive acceleration)
-    private let sharpTurnThreshold: Double = 2.0      // rad/s (genuine sharp turn)
+    private let harshBrakingThreshold: Double = 8.0   // m/s² (~0.8g, genuine hard braking)
+    private let rapidAccelThreshold: Double = 6.5     // m/s² (~0.66g, aggressive acceleration)
+    private let sharpTurnThreshold: Double = 2.5      // rad/s (genuine sharp turn)
     private let impactThreshold: Double = 20.0        // m/s² (~2g, real collision force)
     private let cooldownInterval: TimeInterval = 3.0  // seconds
-    private let warmupDuration: TimeInterval = 3.0    // ignore events for first 3 seconds
-    private let minEstimatedSpeed: Double = 2.0       // m/s (~7 km/h) estimated from accel integration
+    private let warmupDuration: TimeInterval = 5.0    // ignore events for first 5 seconds
+    private let minEstimatedSpeed: Double = 3.5       // m/s (~12 km/h) - need real sustained driving
 
     // Rolling buffers for smoothing (50 samples = 1 second at 50Hz)
     private var accelYBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
@@ -30,7 +30,8 @@ final class EventDetectionEngine {
     private var tripStartTime: Date?
     private var estimatedSpeed: Double = 0        // rough m/s from integrating accelY
     private var lastReadingTime: Date?
-    private let speedDecay: Double = 0.98         // decay factor to prevent drift accumulation
+    private let speedDecay: Double = 0.95         // aggressive decay — brief hand movements fade fast
+    private let accelNoiseFloor: Double = 1.5     // m/s² — ignore small accelerations (hand bumps, tilts)
 
     func processSensorReading(_ reading: SensorReading) -> [DrivingEvent] {
         var events: [DrivingEvent] = []
@@ -57,8 +58,8 @@ final class EventDetectionEngine {
         if let lastTime = lastReadingTime {
             let dt = reading.timestamp.timeIntervalSince(lastTime)
             if dt > 0 && dt < 0.1 {  // sanity check on dt
-                // Only integrate meaningful acceleration (above noise floor of ~0.3 m/s²)
-                let accelForIntegration = abs(smoothedAccelY) > 0.3 ? smoothedAccelY : 0
+                // Only integrate meaningful sustained acceleration (hand movements stay below this)
+                let accelForIntegration = abs(smoothedAccelY) > accelNoiseFloor ? smoothedAccelY : 0
                 estimatedSpeed += accelForIntegration * dt
                 estimatedSpeed *= speedDecay  // decay to prevent unbounded drift
                 if estimatedSpeed < 0 { estimatedSpeed = 0 }  // speed can't be negative
