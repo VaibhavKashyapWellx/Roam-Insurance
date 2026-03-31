@@ -32,6 +32,7 @@ final class TripManager: ObservableObject {
     private var durationTimer: Timer?
     private var scoreTimer: Timer?
     private var coinTimer: Timer?
+    private let coinGracePeriod: TimeInterval = 20.0  // no coin deductions for first 20s
 
     init() {
         // Set up auto-start callback
@@ -199,17 +200,27 @@ final class TripManager: ObservableObject {
         reading.speed = locationManager.currentSpeed
         currentReading = reading
 
+        // Check if still in grace period (no coin deductions early in trip)
+        let inGracePeriod: Bool
+        if let start = tripStartTime {
+            inGracePeriod = Date().timeIntervalSince(start) < coinGracePeriod
+        } else {
+            inGracePeriod = true
+        }
+
         // Driving event detection
         let drivingEvents = detectionEngine.processSensorReading(reading)
         for event in drivingEvents {
             events.insert(event, at: 0)
             scoringEngine.addEvent(event)
-            // Deduct coins for bad events
-            let deduction = coinEngine.deductForEvent(event)
-            if deduction > 0 {
-                xCoins = max(0, xCoins - deduction)
-                totalCoinsLost += deduction
-                addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+            // Deduct coins for bad events (skip during grace period)
+            if !inGracePeriod {
+                let deduction = coinEngine.deductForEvent(event)
+                if deduction > 0 {
+                    xCoins = max(0, xCoins - deduction)
+                    totalCoinsLost += deduction
+                    addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+                }
             }
         }
 
@@ -218,11 +229,13 @@ final class TripManager: ObservableObject {
         for event in phoneEvents {
             events.insert(event, at: 0)
             scoringEngine.addEvent(event)
-            let deduction = coinEngine.deductForEvent(event)
-            if deduction > 0 {
-                xCoins = max(0, xCoins - deduction)
-                totalCoinsLost += deduction
-                addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+            if !inGracePeriod {
+                let deduction = coinEngine.deductForEvent(event)
+                if deduction > 0 {
+                    xCoins = max(0, xCoins - deduction)
+                    totalCoinsLost += deduction
+                    addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+                }
             }
         }
         phoneState = phoneDetector.state

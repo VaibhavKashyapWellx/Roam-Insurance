@@ -3,17 +3,17 @@ import Foundation
 final class EventDetectionEngine {
     // Thresholds (tuned for gravity-free userAcceleration from CMDeviceMotion)
     // Raised for reduced sensitivity — fewer false positives in real-world driving
-    private let harshBrakingThreshold: Double = 10.0  // m/s² (~1.0g, genuine hard braking)
-    private let rapidAccelThreshold: Double = 8.5     // m/s² (~0.87g, aggressive acceleration)
-    private let sharpTurnThreshold: Double = 3.5      // rad/s (genuine sharp turn)
-    private let impactThreshold: Double = 25.0        // m/s² (~2.5g, real collision force)
-    private let cooldownInterval: TimeInterval = 5.0  // seconds between same-type events
-    private let warmupDuration: TimeInterval = 8.0    // ignore events for first 8 seconds
-    private let minEstimatedSpeed: Double = 5.0       // m/s (~18 km/h) - need real sustained driving
+    private let harshBrakingThreshold: Double = 12.0   // m/s² (~1.2g, genuine hard braking only)
+    private let rapidAccelThreshold: Double = 9.5      // m/s² (~0.97g, aggressive acceleration)
+    private let sharpTurnThreshold: Double = 3.8       // rad/s (genuine sharp turn)
+    private let impactThreshold: Double = 25.0         // m/s² (~2.5g, real collision force)
+    private let cooldownInterval: TimeInterval = 6.0   // seconds between same-type events
+    private let warmupDuration: TimeInterval = 15.0    // ignore events for first 15 seconds (phone settling)
+    private let minEstimatedSpeed: Double = 5.5        // m/s (~20 km/h) - need real sustained driving
 
     // Rolling buffers for smoothing (50 samples = 1 second at 50Hz)
-    private var accelYBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
-    private var gyroZBuffer = RollingBuffer<Double>(capacity: 25, defaultValue: 0)
+    private var accelYBuffer = RollingBuffer<Double>(capacity: 50, defaultValue: 0)   // 1 second at 50Hz
+    private var gyroZBuffer = RollingBuffer<Double>(capacity: 50, defaultValue: 0)   // 1 second at 50Hz
     private var accelMagBuffer = RollingBuffer<Double>(capacity: 10, defaultValue: 0)
 
     // Swerving detection: gyroZ variance over time
@@ -32,7 +32,7 @@ final class EventDetectionEngine {
     private var estimatedSpeed: Double = 0        // rough m/s from integrating accelY
     private var lastReadingTime: Date?
     private let speedDecay: Double = 0.95         // aggressive decay — brief hand movements fade fast
-    private let accelNoiseFloor: Double = 1.5     // m/s² — ignore small accelerations (hand bumps, tilts)
+    private let accelNoiseFloor: Double = 2.5     // m/s² — ignore small accelerations (hand bumps, tilts, normal driving)
 
     func processSensorReading(_ reading: SensorReading) -> [DrivingEvent] {
         var events: [DrivingEvent] = []
@@ -74,7 +74,7 @@ final class EventDetectionEngine {
         // Use GPS speed if available, otherwise fall back to estimated speed
         let isMoving: Bool
         if reading.speed >= 0 {
-            isMoving = reading.speed >= 1.4  // GPS available: use 5 km/h threshold
+            isMoving = reading.speed >= 5.56  // GPS available: use 20 km/h threshold
         } else {
             isMoving = estimatedSpeed >= minEstimatedSpeed  // No GPS: use accel-based estimate
         }
@@ -137,8 +137,8 @@ final class EventDetectionEngine {
     }
 
     func reset() {
-        accelYBuffer = RollingBuffer(capacity: 25, defaultValue: 0)
-        gyroZBuffer = RollingBuffer(capacity: 25, defaultValue: 0)
+        accelYBuffer = RollingBuffer(capacity: 50, defaultValue: 0)
+        gyroZBuffer = RollingBuffer(capacity: 50, defaultValue: 0)
         accelMagBuffer = RollingBuffer(capacity: 10, defaultValue: 0)
         gyroZVarianceBuffer = RollingBuffer(capacity: 50, defaultValue: 0)
         gyroZShortBuffer = RollingBuffer(capacity: 10, defaultValue: 0)
