@@ -4,6 +4,7 @@ import Combine
 @MainActor
 final class TripManager: ObservableObject {
     @Published var isTripping = false
+    @Published var isMonitoring = false  // passive GPS monitoring for auto-start
     @Published var events: [DrivingEvent] = []
     @Published var currentScore: Double = 100
     @Published var currentReading = SensorReading()
@@ -14,17 +15,47 @@ final class TripManager: ObservableObject {
     @Published var showSummary = false
     @Published var tripData: TripData?
 
+    // XCoin system
+    @Published var xCoins: Double = 20.0
+    @Published var coinEvents: [CoinEvent] = []  // for animation
+    @Published var totalCoinsEarned: Double = 0
+    @Published var totalCoinsLost: Double = 0
+
     let sensorManager = SensorManager()
-    private let locationManager = LocationManager()
+    let locationManager = LocationManager()
     private let detectionEngine = EventDetectionEngine()
     private let phoneDetector = PhoneUseDetector()
     private let scoringEngine = RiskScoringEngine()
+    private let coinEngine = XCoinEngine()
 
     private var tripStartTime: Date?
     private var durationTimer: Timer?
     private var scoreTimer: Timer?
+    private var coinTimer: Timer?
 
-    func startTrip() {
+    init() {
+        // Set up auto-start callback
+        locationManager.onDrivingDetected = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, !self.isTripping else { return }
+                self.startTrip(autoDetected: true)
+            }
+        }
+    }
+
+    /// Begin passive GPS monitoring for auto-start
+    func startMonitoring() {
+        guard !isTripping && !isMonitoring else { return }
+        isMonitoring = true
+        locationManager.startMonitoring()
+    }
+
+    func stopMonitoring() {
+        isMonitoring = false
+        locationManager.stopMonitoring()
+    }
+
+    func startTrip(autoDetected: Bool = false) {
         events.removeAll()
         currentScore = 100
         scoreHistory.removeAll()
@@ -32,15 +63,27 @@ final class TripManager: ObservableObject {
         showSummary = false
         tripData = nil
 
+        // Reset XCoins
+        xCoins = 20.0
+        coinEvents.removeAll()
+        totalCoinsEarned = 0
+        totalCoinsLost = 0
+
         detectionEngine.reset()
         phoneDetector.reset()
         scoringEngine.start()
+        coinEngine.reset()
 
         tripStartTime = Date()
         isTripping = true
+        isMonitoring = false
 
         updateCategoryScores()
-        locationManager.start()
+
+        if !autoDetected {
+            locationManager.start()
+        }
+        // If auto-detected, location is already running
 
         sensorManager.start { [weak self] reading in
             Task { @MainActor [weak self] in
@@ -64,6 +107,19 @@ final class TripManager: ObservableObject {
                 self.updateCategoryScores()
             }
         }
+
+        // Coin earning timer — award coins for clean driving every 15 seconds
+        coinTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isTripping else { return }
+                let earned = self.coinEngine.earnForCleanDriving(currentScore: self.currentScore)
+                if earned > 0 {
+                    self.xCoins = min(30, self.xCoins + earned)
+                    self.totalCoinsEarned += earned
+                    self.addCoinEvent(amount: earned, reason: "Safe driving bonus")
+                }
+            }
+        }
     }
 
     func endTrip() {
@@ -71,8 +127,10 @@ final class TripManager: ObservableObject {
         locationManager.stop()
         durationTimer?.invalidate()
         scoreTimer?.invalidate()
+        coinTimer?.invalidate()
         durationTimer = nil
         scoreTimer = nil
+        coinTimer = nil
         isTripping = false
 
         // Build trip data
@@ -85,13 +143,11 @@ final class TripManager: ObservableObject {
             if count > 0 { breakdown[type.rawValue] = count }
         }
 
-        // Capture category scores
         var catScores: [String: Double] = [:]
         for cat in EventCategory.allCases {
             catScores[cat.rawValue] = scoringEngine.categoryScore(for: cat)
         }
 
-        // Generate human-readable risk factors
         var riskFactors: [String] = []
         for cat in EventCategory.allCases {
             let score = scoringEngine.categoryScore(for: cat)
@@ -101,6 +157,9 @@ final class TripManager: ObservableObject {
             }
         }
         if riskFactors.isEmpty { riskFactors.append("No significant risk factors detected") }
+
+        // Finalize coins — clamp to [0, 30]
+        xCoins = max(0, min(30, xCoins))
 
         tripData = TripData(
             startTime: tripStartTime ?? endTime,
@@ -115,7 +174,10 @@ final class TripManager: ObservableObject {
             totalPhoneTime: phoneDetector.totalPhoneTime,
             categoryBreakdown: breakdown,
             categoryScores: catScores,
-            riskFactors: riskFactors
+            riskFactors: riskFactors,
+            xCoinsEarned: xCoins,
+            totalCoinsEarned: totalCoinsEarned,
+            totalCoinsLost: totalCoinsLost
         )
 
         showSummary = true
@@ -142,6 +204,13 @@ final class TripManager: ObservableObject {
         for event in drivingEvents {
             events.insert(event, at: 0)
             scoringEngine.addEvent(event)
+            // Deduct coins for bad events
+            let deduction = coinEngine.deductForEvent(event)
+            if deduction > 0 {
+                xCoins = max(0, xCoins - deduction)
+                totalCoinsLost += deduction
+                addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+            }
         }
 
         // Phone use detection
@@ -149,16 +218,18 @@ final class TripManager: ObservableObject {
         for event in phoneEvents {
             events.insert(event, at: 0)
             scoringEngine.addEvent(event)
+            let deduction = coinEngine.deductForEvent(event)
+            if deduction > 0 {
+                xCoins = max(0, xCoins - deduction)
+                totalCoinsLost += deduction
+                addCoinEvent(amount: -deduction, reason: event.type.rawValue)
+            }
         }
         phoneState = phoneDetector.state
 
-        // Smoothness tracking (continuous jerk metric)
         scoringEngine.updateSmoothness(accelY: reading.accelY, timestamp: reading.timestamp)
-
-        // Context tracking (time-of-day risk)
         scoringEngine.updateContext(at: reading.timestamp)
 
-        // Cap events list
         if events.count > 500 {
             events = Array(events.prefix(500))
         }
@@ -171,6 +242,15 @@ final class TripManager: ObservableObject {
                 score: scoringEngine.categoryScore(for: cat),
                 penaltyCount: scoringEngine.categoryCount(for: cat)
             )
+        }
+    }
+
+    private func addCoinEvent(amount: Double, reason: String) {
+        let event = CoinEvent(amount: amount, reason: reason)
+        coinEvents.insert(event, at: 0)
+        // Keep only recent events for animation
+        if coinEvents.count > 20 {
+            coinEvents = Array(coinEvents.prefix(20))
         }
     }
 }

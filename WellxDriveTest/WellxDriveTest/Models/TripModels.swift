@@ -121,6 +121,19 @@ struct ScorePoint: Identifiable {
     let score: Double
 }
 
+// MARK: - XCoin Event (for animations)
+
+struct CoinEvent: Identifiable {
+    let id = UUID()
+    let amount: Double       // positive = earned, negative = deducted
+    let reason: String
+    let timestamp: Date = Date()
+
+    var isPositive: Bool { amount > 0 }
+}
+
+// MARK: - Trip Data
+
 struct TripData: Codable {
     let startTime: Date
     let endTime: Date
@@ -134,7 +147,10 @@ struct TripData: Codable {
     let totalPhoneTime: TimeInterval
     let categoryBreakdown: [String: Int]
     let categoryScores: [String: Double]
-    let riskFactors: [String]            // human-readable risk factor descriptions
+    let riskFactors: [String]
+    let xCoinsEarned: Double
+    let totalCoinsEarned: Double
+    let totalCoinsLost: Double
 }
 
 enum PhoneState: String {

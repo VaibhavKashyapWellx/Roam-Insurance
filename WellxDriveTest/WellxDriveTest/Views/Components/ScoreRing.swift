@@ -4,53 +4,81 @@ struct ScoreRing: View {
     let score: Double
     let size: CGFloat
 
-    @State private var animatedProgress: Double = 0
-
-    private var progress: Double { score / 100.0 }
-    private var color: Color { Theme.scoreColor(for: score) }
+    @State private var animatedScore: Double = 0
+    @State private var glowPhase: Double = 0
 
     var body: some View {
         ZStack {
-            // Background ring
-            Circle()
-                .stroke(Theme.surfaceLight, lineWidth: size * 0.06)
-
-            // Score arc
-            Circle()
-                .trim(from: 0, to: animatedProgress)
-                .stroke(
-                    AngularGradient(
-                        colors: [color.opacity(0.3), color],
-                        center: .center,
-                        startAngle: .degrees(0),
-                        endAngle: .degrees(360 * animatedProgress)
-                    ),
-                    style: StrokeStyle(lineWidth: size * 0.06, lineCap: .round)
+            // Radial gradient cloud background (Wellx style)
+            ZStack {
+                // Outer soft glow
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Theme.scoreGradientEnd.opacity(0.35),
+                        Theme.scoreGradientStart.opacity(0.15),
+                        Color.clear
+                    ]),
+                    center: .center,
+                    startRadius: size * 0.05,
+                    endRadius: size * 0.55
                 )
-                .rotationEffect(.degrees(-90))
-                .shadow(color: color.opacity(0.5), radius: 8)
+
+                // Inner vibrant core
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Theme.scoreGradientEnd.opacity(0.7),
+                        Theme.scoreGradientStart.opacity(0.4),
+                        Color.clear
+                    ]),
+                    center: .center,
+                    startRadius: size * 0.02,
+                    endRadius: size * 0.35
+                )
+
+                // Noise-like cloud effect via overlapping circles
+                ForEach(0..<6, id: \.self) { i in
+                    let angle = Double(i) * 60.0
+                    let offsetX = cos(angle * .pi / 180) * size * 0.08
+                    let offsetY = sin(angle * .pi / 180) * size * 0.08
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Theme.scoreGradientEnd.opacity(0.25),
+                                    Color.clear
+                                ]),
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: size * 0.25
+                            )
+                        )
+                        .frame(width: size * 0.5, height: size * 0.5)
+                        .offset(x: offsetX, y: offsetY)
+                        .blur(radius: size * 0.05)
+                }
+            }
+            .frame(width: size, height: size)
 
             // Score text
             VStack(spacing: 2) {
-                Text("\(Int(score))")
-                    .font(.system(size: size * 0.28, weight: .bold, design: .monospaced))
-                    .foregroundColor(color)
+                Text("\(Int(animatedScore))")
+                    .font(.system(size: size * 0.3, weight: .bold, design: .rounded))
+                    .foregroundColor(Theme.textPrimary)
 
                 Text(Theme.riskLabel(for: score))
-                    .font(.system(size: size * 0.08, weight: .semibold))
-                    .foregroundColor(color.opacity(0.8))
-                    .tracking(1.5)
+                    .font(.system(size: size * 0.07, weight: .medium))
+                    .foregroundColor(Theme.textSecondary)
             }
         }
         .frame(width: size, height: size)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.8)) {
-                animatedProgress = progress
+            withAnimation(.easeOut(duration: 1.0)) {
+                animatedScore = score
             }
         }
         .onChange(of: score) { _, newValue in
             withAnimation(.easeInOut(duration: 0.5)) {
-                animatedProgress = newValue / 100.0
+                animatedScore = newValue
             }
         }
     }

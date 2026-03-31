@@ -26,6 +26,7 @@
 		AA000017 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000017; };
 		AA000018 /* RollingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000018; };
 		AA000019 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000019; };
+		AA000020 /* XCoinEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000020; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		AB000017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		AB000018 /* RollingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingBuffer.swift; sourceTree = "<group>"; };
 		AB000019 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		AB000020 /* XCoinEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XCoinEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 				AB000006 /* EventDetectionEngine.swift */,
 				AB000007 /* PhoneUseDetector.swift */,
 				AB000008 /* RiskScoringEngine.swift */,
+				AB000020 /* XCoinEngine.swift */,
 			);
 			path = Detection;
 			sourceTree = "<group>";
@@ -231,6 +234,7 @@
 				AA000017 /* Theme.swift in Sources */,
 				AA000018 /* RollingBuffer.swift in Sources */,
 				AA000019 /* LocationManager.swift in Sources */,
+				AA000020 /* XCoinEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -369,7 +373,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -400,7 +404,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

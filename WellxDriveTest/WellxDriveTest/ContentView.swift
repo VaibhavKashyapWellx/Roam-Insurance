@@ -15,6 +15,6 @@ struct ContentView: View {
                 TripView(tripManager: tripManager)
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
