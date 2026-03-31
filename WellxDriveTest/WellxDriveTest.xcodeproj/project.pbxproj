@@ -19,10 +19,6 @@
 		AA000010 /* TripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000010; };
 		AA000011 /* TripSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000011; };
 		AA000012 /* ScoreRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000012; };
-		AA000013 /* EventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000013; };
-		AA000014 /* CategoryScoreBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000014; };
-		AA000015 /* ScoreTrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000015; };
-		AA000016 /* SensorReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000016; };
 		AA000017 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000017; };
 		AA000018 /* RollingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000018; };
 		AA000019 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000019; };
@@ -43,10 +39,6 @@
 		AB000010 /* TripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripView.swift; sourceTree = "<group>"; };
 		AB000011 /* TripSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSummaryView.swift; sourceTree = "<group>"; };
 		AB000012 /* ScoreRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreRing.swift; sourceTree = "<group>"; };
-		AB000013 /* EventRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRow.swift; sourceTree = "<group>"; };
-		AB000014 /* CategoryScoreBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryScoreBar.swift; sourceTree = "<group>"; };
-		AB000015 /* ScoreTrendChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTrendChart.swift; sourceTree = "<group>"; };
-		AB000016 /* SensorReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorReadingsView.swift; sourceTree = "<group>"; };
 		AB000017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		AB000018 /* RollingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingBuffer.swift; sourceTree = "<group>"; };
 		AB000019 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
@@ -139,10 +131,6 @@
 			isa = PBXGroup;
 			children = (
 				AB000012 /* ScoreRing.swift */,
-				AB000013 /* EventRow.swift */,
-				AB000014 /* CategoryScoreBar.swift */,
-				AB000015 /* ScoreTrendChart.swift */,
-				AB000016 /* SensorReadingsView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -227,10 +215,6 @@
 				AA000010 /* TripView.swift in Sources */,
 				AA000011 /* TripSummaryView.swift in Sources */,
 				AA000012 /* ScoreRing.swift in Sources */,
-				AA000013 /* EventRow.swift in Sources */,
-				AA000014 /* CategoryScoreBar.swift in Sources */,
-				AA000015 /* ScoreTrendChart.swift in Sources */,
-				AA000016 /* SensorReadingsView.swift in Sources */,
 				AA000017 /* Theme.swift in Sources */,
 				AA000018 /* RollingBuffer.swift in Sources */,
 				AA000019 /* LocationManager.swift in Sources */,
